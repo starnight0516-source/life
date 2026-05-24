@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>玄機探秘：精準八字與流年推演</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lunar-javascript/1.6.12/lunar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Serif TC', serif; background-color: #FDFBF7; color: #334155; min-height: 100vh;}
+        .mystic-card { background: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); border-radius: 1rem; }
+        .btn-primary { background: linear-gradient(135deg, #B45309 0%, #92400E 100%); color: white; transition: all 0.3s ease; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(146, 64, 14, 0.3); }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <header class="text-center mb-10 mt-6">
+        <h1 class="text-4xl md:text-5xl font-black text-amber-900 mb-3 tracking-widest">玄機探秘</h1>
+        <p class="text-amber-700 tracking-wider font-bold">精準四柱八字 ‧ 歲運流年詳批</p>
+    </header>
+
+    <main class="max-w-5xl mx-auto">
+        <!-- 輸入區 -->
+        <section id="inputSection" class="mystic-card p-8 md:p-12 max-w-md mx-auto mb-16 transition-all duration-500">
+            <h2 class="text-2xl text-center text-amber-800 mb-8 font-bold flex items-center justify-center gap-2">
+                <span>✦</span> 締結命盤 <span>✦</span>
+            </h2>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1 font-bold">真實姓名</label>
+                    <input type="text" id="userName" placeholder="請輸入姓名" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-amber-600 focus:bg-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1 font-bold">命主性別</label>
+                    <div class="flex gap-6 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                        <label class="flex items-center cursor-pointer text-amber-900 font-bold"><input type="radio" name="gender" value="male" checked class="mr-2 w-4 h-4 text-amber-600"> 乾造 (男)</label>
+                        <label class="flex items-center cursor-pointer text-amber-900 font-bold"><input type="radio" name="gender" value="female" class="mr-2 w-4 h-4 text-amber-600"> 坤造 (女)</label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1 font-bold">出生日期 (國曆 YYYYMMDD)</label>
+                    <input type="text" id="birthDate" placeholder="例如：19900520" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-amber-600 focus:bg-white">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-gray-500 mb-1 font-bold">出生時辰</label>
+                    <select id="birthTime" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-amber-600 focus:bg-white font-bold text-gray-700">
+                        <option value="0">子時 (23:00-00:59)</option>
+                        <option value="2">丑時 (01:00-02:59)</option>
+                        <option value="4">寅時 (03:00-04:59)</option>
+                        <option value="6">卯時 (05:00-06:59)</option>
+                        <option value="8">辰時 (07:00-08:59)</option>
+                        <option value="10">巳時 (09:00-10:59)</option>
+                        <option value="12" selected>午時 (11:00-12:59)</option>
+                        <option value="14">未時 (13:00-14:59)</option>
+                        <option value="16">申時 (15:00-16:59)</option>
+                        <option value="18">酉時 (17:00-18:59)</option>
+                        <option value="20">戌時 (19:00-20:59)</option>
+                        <option value="22">亥時 (21:00-22:59)</option>
+                    </select>
+                </div>
+                
+                <button onclick="calculateFortune()" class="w-full btn-primary py-3.5 rounded-lg font-bold text-lg tracking-widest mt-4">精準排盤推演</button>
+            </div>
+        </section>
+
+        <!-- 結果分析儀表板 -->
+        <section id="resultSection" class="hidden opacity-0 transition-opacity duration-1000">
+            <div class="flex justify-end mb-4">
+                <button id="downloadPdfBtn" onclick="downloadPDF()" class="border-2 border-amber-700 text-amber-800 bg-amber-50 hover:bg-amber-100 px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 transition-all shadow-sm">
+                    <span id="pdfIcon">📄</span> <span id="pdfText">下載精準命理報告 (PDF)</span>
+                </button>
+            </div>
+
+            <!-- 頂部命主資訊 -->
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-amber-900 mb-2">命主：<span id="resName" class="text-amber-600"></span> <span id="resGender" class="text-lg text-gray-500"></span></h2>
+                <p class="text-gray-600">國曆：<span id="resSolarDate"></span></p>
+                <p class="text-amber-800 font-bold text-lg mt-1">農曆：<span id="resLunarDate"></span></p>
+            </div>
+
+            <!-- 八字排盤 (精準) -->
+            <div class="mystic-card p-6 md:p-10 mb-10 border-amber-200 bg-white">
+                <h3 class="text-xl font-bold text-amber-900 text-center mb-8 tracking-widest border-b border-amber-200 pb-4">【 本 命 四 柱 八 字 】</h3>
+                <div class="grid grid-cols-4 gap-2 md:gap-6 text-center">
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">年柱</p>
+                        <p id="bzYearGan" class="text-2xl md:text-4xl font-black text-gray-800"></p>
+                        <p id="bzYearZhi" class="text-2xl md:text-4xl font-black text-gray-500"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">月柱 (節氣)</p>
+                        <p id="bzMonthGan" class="text-2xl md:text-4xl font-black text-gray-800"></p>
+                        <p id="bzMonthZhi" class="text-2xl md:text-4xl font-black text-gray-500"></p>
+                    </div>
+                    <div class="bg-amber-50 rounded-xl p-3 border-2 border-amber-400 shadow-inner">
+                        <p class="text-amber-700 text-sm mb-2 font-bold">日柱 (元神)</p>
+                        <p id="bzDayGan" class="text-3xl md:text-5xl font-black text-amber-700"></p>
+                        <p id="bzDayZhi" class="text-3xl md:text-5xl font-black text-amber-600"></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-sm mb-2">時柱</p>
+                        <p id="bzTimeGan" class="text-2xl md:text-4xl font-black text-gray-800"></p>
+                        <p id="bzTimeZhi" class="text-2xl md:text-4xl font-black text-gray-500"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 命運三核 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="mystic-card p-6 text-center">
+                    <h4 class="text-amber-800 font-bold mb-3 border-b border-gray-100 pb-2">紫微主星</h4>
+                    <p id="resZiwei" class="text-2xl font-black text-gray-800 mb-2"></p>
+                    <p id="resZiweiDesc" class="text-sm text-gray-600 text-justify"></p>
+                </div>
+                <div class="mystic-card p-6 text-center">
+                    <h4 class="text-amber-800 font-bold mb-3 border-b border-gray-100 pb-2">西洋星象</h4>
+                    <p id="resZodiac" class="text-2xl font-black text-gray-800 mb-2"></p>
+                    <p id="resZodiacDesc" class="text-sm text-gray-600 text-justify"></p>
+                </div>
+                <div class="mystic-card p-6 text-center">
+                    <h4 class="text-amber-800 font-bold mb-3 border-b border-gray-100 pb-2">生命靈數</h4>
+                    <p id="resNum" class="text-2xl font-black text-amber-600 mb-2"></p>
+                    <p id="resNumDesc" class="text-sm text-gray-600 text-justify"></p>
+                </div>
+            </div>
+
+            <!-- 流年運勢區 -->
+            <div id="yearlyFortuneContainer" class="mb-10">
+                <!-- 動態注入今明兩年流年 -->
+            </div>
+        </section>
+    </main>
+
+    <!-- 用於生成 PDF 的隱藏模板容器 (古典明亮風格、完美A4排版) -->
+    <div id="hiddenPdfContainer" style="position: absolute; left: 0; top: 0; width: 800px; z-index: -100; visibility: hidden; pointer-events: none; background-color: #FDFBF7;"></div>
+
+    <script>
+        // --- 命理資料庫 ---
+        const ziweiData = [
+            { star: "紫微星", desc: "帝王之星，具備領導才能與強烈自尊心，一生追求卓越，有逢凶化吉之能量。" },
+            { star: "天機星", desc: "智多星，心思細密，反應敏捷。善於策劃與分析，適合從事腦力或技術型工作。" },
+            { star: "太陽星", desc: "光明之星，熱情開朗，樂於助人。行動力強，事業心重，一生奔波但成就斐然。" },
+            { star: "武曲星", desc: "財星，性格剛毅果決，執行力極強。對金錢敏銳，適合經商或從事金融、武職。" },
+            { star: "天同星", desc: "福星，性格溫和，懂得知足常樂。注重生活品質，有極佳的協調與社交能力。" },
+            { star: "廉貞星", desc: "囚星/次桃花，性格狂傲不羈，公私分明。具有強烈企圖心，藝術與公關天賦極高。" },
+            { star: "七殺星", desc: "將星，性格獨立，敢作敢當。歷經艱辛方能成就大業，是開創格局的絕對主力。" }
+        ];
+
+        const yearlyData = {
+            wealth: [
+                "正財穩定，偏財亦有斬獲。投資宜見好就收，避免貪勝不知輸。秋季有意外之財入帳的機會。",
+                "財庫容易出現破洞，不宜進行高風險投資或借貸給他人。建議以保守儲蓄為主，減少非必要開支。",
+                "財運如虹，努力與回報成正比。適合拓展業務或開啟副業，但需注意合約細節，防範小人劫財。",
+                "吉星高照，財路大開。過去的投資將在此時迎來豐收，適合進行中長期的資產配置規劃。"
+            ],
+            career: [
+                "職場遇貴人相助，有升職加薪之象。需保持謙遜，展現領導力，切忌好大喜功惹人眼紅。",
+                "工作壓力倍增，容易與上司或同事發生摩擦。此時宜低調行事，多進修充實自己，等待時機。",
+                "事業面臨轉型或突破期，變動雖帶來不安，但也伴隨巨大的機遇。勇敢接受挑戰，能開創新局。",
+                "平穩發展的一年，按部就班即可達成目標。適合鞏固現有基礎，培養團隊默契與自身專業深度。"
+            ],
+            love: [
+                "桃花旺盛，單身者極易遇見心儀對象；有伴侶者感情升溫，論及婚嫁。但需防範爛桃花干擾。",
+                "感情狀態平淡穩定。單身者更專注於自身發展，對感情保持隨緣態度，寧缺勿濫，享受獨處。",
+                "容易因價值觀或生活瑣事與伴侶發生爭執，需多包容溝通。單身者容易陷入單戀或曖昧不明的關係。",
+                "紅鸞星動，是修成正果的好時機。彼此信任加深，能共同規劃未來，建立穩固的家庭基礎。"
+            ],
+            health: [
+                "身體健康狀況良好，精力充沛。適合培養新的運動習慣，保持規律作息，能讓氣色更加紅潤。",
+                "容易感到精神壓力與焦慮。建議多接觸大自然，或透過冥想放鬆身心，調節氣血，避免熬夜。",
+                "需特別注意腸胃與消化系統的保養，飲食宜清淡定時。出門在外需留意交通安全，防範意外磕碰。",
+                "有舊疾復發的隱患，建議安排一次全身健康檢查。平時多注重養生，適度進補，增強免疫力。"
+            ]
+        };
+
+        // --- 核心演算法：生成穩定的 Hash Seed ---
+        // 將 姓名+生日+時辰+性別 轉化為絕對一致的亂數種子，確保同一人的命盤永遠精準一致
+        function generateSeed(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0; 
+            }
+            return Math.abs(hash);
+        }
+
+        function randomFromSeed(seed, max) {
+            let x = Math.sin(seed++) * 10000;
+            return Math.floor((x - Math.floor(x)) * max);
+        }
+
+        // --- 運算邏輯 ---
+        function calculateFortune() {
+            const name = document.getElementById('userName').value.trim();
+            const bDate = document.getElementById('birthDate').value.trim();
+            const hour = parseInt(document.getElementById('birthTime').value);
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            
+            if(!name || bDate.length !== 8 || isNaN(parseInt(bDate))) {
+                alert("大師提醒：請輸入真實姓名與正確的8碼國曆日期 (如 19900520) 才能精準推演。");
+                return;
+            }
+
+            // UI 轉場
+            const inputSec = document.getElementById('inputSection');
+            const resultSec = document.getElementById('resultSection');
+            inputSec.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                inputSec.classList.add('hidden');
+                resultSec.classList.remove('hidden');
+                
+                // 1. 真實日期與精準八字排盤 (利用 Lunar-javascript 的 EightChar)
+                const y = parseInt(bDate.substring(0, 4));
+                const m = parseInt(bDate.substring(4, 6));
+                const d = parseInt(bDate.substring(6, 8));
+                
+                // 建立包含時間的 Date 物件，獲取最精準的節氣八字
+                const dateObj = new Date(y, m - 1, d, hour);
+                const lunar = Solar.fromDate(dateObj).getLunar();
+                const baZi = lunar.getEightChar(); // 這是最核心的精準八字引擎
+
+                document.getElementById('resName').innerText = name;
+                document.getElementById('resGender').innerText = `(${gender === 'male' ? '乾造' : '坤造'})`;
+                document.getElementById('resSolarDate').innerText = `${y}年 ${m}月 ${d}日 ${hour}時`;
+                document.getElementById('resLunarDate').innerText = `${lunar.getYearInGanZhi()}年 ${lunar.getMonthInChinese()}月 ${lunar.getDayInChinese()}日 ${lunar.getTimeZhi()}時`;
+
+                // 填入八字四柱
+                document.getElementById('bzYearGan').innerText = baZi.getYearGan();
+                document.getElementById('bzYearZhi').innerText = baZi.getYearZhi();
+                document.getElementById('bzMonthGan').innerText = baZi.getMonthGan();
+                document.getElementById('bzMonthZhi').innerText = baZi.getMonthZhi();
+                document.getElementById('bzDayGan').innerText = baZi.getDayGan();
+                document.getElementById('bzDayZhi').innerText = baZi.getDayZhi();
+                document.getElementById('bzTimeGan').innerText = baZi.getTimeGan();
+                document.getElementById('bzTimeZhi').innerText = baZi.getTimeZhi();
+
+                // 2. 命盤種子生成 (加入性別與時辰，確保絕對精準)
+                window.globalBaseSeed = generateSeed(`${name}${y}${m}${d}${hour}${gender}`);
+
+                // 3. 西洋星象 (真實日期判定)
+                const zodiacs = ["摩羯座", "水瓶座", "雙魚座", "牡羊座", "金牛座", "雙子座", "巨蟹座", "獅子座", "處女座", "天秤座", "天蠍座", "射手座", "摩羯座"];
+                const zDates = [20, 19, 21, 20, 21, 22, 23, 23, 23, 24, 22, 22];
+                let zIdx = m;
+                if(d < zDates[m-1]) zIdx = m - 1;
+                document.getElementById('resZodiac').innerText = zodiacs[zIdx];
+                document.getElementById('resZodiacDesc').innerText = `源自西方占星，您的太陽星座坐落於${zodiacs[zIdx]}，這賦予了您外顯性格上的獨特光芒與處世模式。`;
+
+                // 4. 生命靈數 (真實數學計算)
+                let numStr = `${y}${m}${d}`;
+                let sum = 0;
+                while(numStr.length > 1) {
+                    sum = numStr.split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+                    numStr = sum.toString();
+                }
+                document.getElementById('resNum').innerText = `${sum} 號人`;
+                document.getElementById('resNumDesc').innerText = `生命靈數 ${sum} 代表您靈魂深處的課題。了解這個數字，有助於解開人生中反覆出現的因果循環。`;
+
+                // 5. 紫微主星 (依據專屬 Seed)
+                const zw = ziweiData[randomFromSeed(window.globalBaseSeed, ziweiData.length)];
+                document.getElementById('resZiwei').innerText = zw.star;
+                document.getElementById('resZiweiDesc').innerText = zw.desc;
+
+                // 6. 流年推演 (動態產生今年與明年)
+                const currentYear = new Date().getFullYear();
+                window.yearlyDataList = [];
+                let yearlyHtml = "";
+
+                for(let i=0; i<2; i++) {
+                    const targetYear = currentYear + i;
+                    // 取該年年中節氣以獲取流年干支
+                    const tempSolar = Solar.fromYmd(targetYear, 6, 1);
+                    const yGz = tempSolar.getLunar().getYearInGanZhi();
+                    const yObj = { num: targetYear, gz: yGz };
+                    window.yearlyDataList.push(yObj);
+                    
+                    yearlyHtml += generateYearlyBlockHtml(yObj, window.globalBaseSeed);
+                }
+                document.getElementById('yearlyFortuneContainer').innerHTML = yearlyHtml;
+
+                // 顯示結果
+                setTimeout(() => { resultSec.classList.remove('opacity-0'); }, 100);
+            }, 500);
+        }
+
+        // --- 流年 HTML 產生器 (網頁版顯示用) ---
+        function generateYearlyBlockHtml(yearObj, baseSeed) {
+            const yearSeed = baseSeed + yearObj.num;
+            const w = yearlyData.wealth[randomFromSeed(yearSeed + 1, yearlyData.wealth.length)];
+            const c = yearlyData.career[randomFromSeed(yearSeed + 2, yearlyData.career.length)];
+            const l = yearlyData.love[randomFromSeed(yearSeed + 3, yearlyData.love.length)];
+            const h = yearlyData.health[randomFromSeed(yearSeed + 4, yearlyData.health.length)];
+
+            let chartHtml = '<div class="grid grid-cols-6 gap-2 mt-4">';
+            const months = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '臘月'];
+            for(let i=0; i<12; i++) {
+                const stars = randomFromSeed(yearSeed + 100 + i, 5) + 1;
+                const isBad = stars <= 2;
+                const starStr = '★'.repeat(stars);
+                const bgClass = isBad ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200';
+                const textClass = isBad ? 'text-red-500' : 'text-amber-500';
+                
+                chartHtml += `<div class="${bgClass} border rounded-lg p-2 text-center shadow-sm">
+                    <div class="text-xs text-gray-500 font-bold mb-1">${months[i]}</div>
+                    <div class="text-[10px] ${textClass} tracking-tighter">${starStr}</div>
+                </div>`;
+            }
+            chartHtml += '</div>';
+
+            return `
+            <div class="mystic-card p-6 md:p-8 mb-8 border-amber-300 relative overflow-hidden">
+                <div class="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-sm">流年大運</div>
+                <h3 class="text-2xl font-bold text-amber-900 mb-6 text-center border-b border-amber-100 pb-3">✦ 【 ${yearObj.num} ${yearObj.gz}年 】 歲運詳批 ✦</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <strong class="text-amber-800 text-lg">💰 財帛宮</strong>
+                        <p class="text-gray-600 text-sm mt-2 text-justify leading-relaxed">${w}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <strong class="text-amber-800 text-lg">🚀 事業宮</strong>
+                        <p class="text-gray-600 text-sm mt-2 text-justify leading-relaxed">${c}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <strong class="text-amber-800 text-lg">❤️ 夫妻宮</strong>
+                        <p class="text-gray-600 text-sm mt-2 text-justify leading-relaxed">${l}</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl">
+                        <strong class="text-amber-800 text-lg">🛡️ 疾厄宮</strong>
+                        <p class="text-gray-600 text-sm mt-2 text-justify leading-relaxed">${h}</p>
+                    </div>
+                </div>
+                <h4 class="text-amber-800 font-bold text-center mt-6">十二流月氣場波動圖</h4>
+                ${chartHtml}
+            </div>
+            `;
+        }
+
+        // --- 匯出 PDF 專用 HTML 產生器 (確保百分比排版與明亮風格，絕對防裁切) ---
+        function getPdfYearlyBlockHtml(yearObj, baseSeed) {
+            const yearSeed = baseSeed + yearObj.num;
+            const w = yearlyData.wealth[randomFromSeed(yearSeed + 1, yearlyData.wealth.length)];
+            const c = yearlyData.career[randomFromSeed(yearSeed + 2, yearlyData.career.length)];
+            const l = yearlyData.love[randomFromSeed(yearSeed + 3, yearlyData.love.length)];
+            const h = yearlyData.health[randomFromSeed(yearSeed + 4, yearlyData.health.length)];
+
+            let chartHtml = '<div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-top: 15px; width: 100%; box-sizing: border-box;">';
+            const months = ['正月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '冬月', '臘月'];
+            for(let i=0; i<12; i++) {
+                const stars = randomFromSeed(yearSeed + 100 + i, 5) + 1;
+                const isBad = stars <= 2;
+                const starStr = '★'.repeat(stars);
+                const bg = isBad ? '#FEF2F2' : '#F8FAFC'; 
+                const border = isBad ? '#FCA5A5' : '#E2E8F0';
+                const color = isBad ? '#EF4444' : '#D97706'; 
+                chartHtml += `<div style="width: 15.5%; background-color: ${bg}; border: 1px solid ${border}; border-radius: 8px; padding: 10px 2px; text-align: center; margin-bottom: 10px; box-sizing: border-box;">
+                    <div style="color: #475569; font-size: 13px; margin-bottom: 4px; font-weight: bold;">${months[i]}</div>
+                    <div style="color: ${color}; font-size: 10px; letter-spacing: 1px;">${starStr}</div>
+                </div>`;
+            }
+            chartHtml += '</div>';
+
+            return `
+            <div style="page-break-inside: avoid; border: 2px solid #D97706; border-radius: 12px; padding: 25px; margin-bottom: 30px; background-color: #FFFFFF; box-sizing: border-box; width: 100%;">
+                <h3 style="color: #92400E; font-size: 22px; font-weight: bold; border-bottom: 1px solid #D97706; padding-bottom: 10px; margin-bottom: 20px; text-align: center;">✦ 【 ${yearObj.num} ${yearObj.gz}年 】 歲運詳批 ✦</h3>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; margin-bottom: 20px; width: 100%; box-sizing: border-box;">
+                    <div style="width: 48.5%; background-color: #FAFAF9; border: 1px solid #E2E8F0; padding: 15px; border-radius: 8px; box-sizing: border-box; margin-bottom: 15px;">
+                        <strong style="color: #92400E; font-size: 16px;">💰 財帛宮</strong>
+                        <p style="color: #334155; font-size: 14px; margin-top: 8px; line-height: 1.6; text-align: justify;">${w}</p>
+                    </div>
+                    <div style="width: 48.5%; background-color: #FAFAF9; border: 1px solid #E2E8F0; padding: 15px; border-radius: 8px; box-sizing: border-box; margin-bottom: 15px;">
+                        <strong style="color: #92400E; font-size: 16px;">🚀 事業宮</strong>
+                        <p style="color: #334155; font-size: 14px; margin-top: 8px; line-height: 1.6; text-align: justify;">${c}</p>
+                    </div>
+                    <div style="width: 48.5%; background-color: #FAFAF9; border: 1px solid #E2E8F0; padding: 15px; border-radius: 8px; box-sizing: border-box;">
+                        <strong style="color: #92400E; font-size: 16px;">❤️ 夫妻宮</strong>
+                        <p style="color: #334155; font-size: 14px; margin-top: 8px; line-height: 1.6; text-align: justify;">${l}</p>
+                    </div>
+                    <div style="width: 48.5%; background-color: #FAFAF9; border: 1px solid #E2E8F0; padding: 15px; border-radius: 8px; box-sizing: border-box;">
+                        <strong style="color: #92400E; font-size: 16px;">🛡️ 疾厄宮</strong>
+                        <p style="color: #334155; font-size: 14px; margin-top: 8px; line-height: 1.6; text-align: justify;">${h}</p>
+                    </div>
+                </div>
+                <h4 style="color: #92400E; font-size: 18px; text-align: center; margin-bottom: 15px; font-weight: bold;">十二流月氣場波動圖</h4>
+                ${chartHtml}
+            </div>
+            `;
+        }
+
+        function downloadPDF() {
+            const btn = document.getElementById('downloadPdfBtn');
+            const icon = document.getElementById('pdfIcon');
+            const text = document.getElementById('pdfText');
+
+            btn.disabled = true;
+            icon.textContent = "⏳";
+            text.textContent = "正在排版專業報告...";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const rName = document.getElementById('resName').innerText;
+            const rGender = document.getElementById('resGender').innerText;
+            const rDate = document.getElementById('resSolarDate').innerText;
+            const rLunar = document.getElementById('resLunarDate').innerText;
+            
+            const pdfHtml = `
+                <div style="width: 100%; background-color: #FDFBF7; color: #1E293B; font-family: 'Noto Serif TC', serif; padding: 10px; box-sizing: border-box;">
+                    
+                    <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #D97706; padding-bottom: 15px;">
+                        <h1 style="color: #92400E; font-size: 32px; font-weight: 900; margin-bottom: 10px; letter-spacing: 4px;">玄機探秘．專屬命理報告</h1>
+                        <p style="color: #78350F; font-size: 16px;">為您精準揭示先天格局與流年大運</p>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="font-size: 22px; font-weight: bold; margin-bottom: 10px; color: #1E293B;">命主：<span style="color: #B45309;">${rName}</span> <span style="color: #64748B; font-size: 18px;">${rGender}</span></h2>
+                        <p style="color: #475569; font-size: 15px; margin: 5px 0;">國曆：${rDate}</p>
+                        <p style="color: #92400E; font-size: 15px; font-weight: bold; margin: 5px 0;">農曆：${rLunar}</p>
+                    </div>
+
+                    <div style="border: 2px solid #D97706; border-radius: 12px; padding: 25px; margin-bottom: 30px; background-color: #FFFFFF; box-sizing: border-box; width: 100%;">
+                        <h3 style="color: #92400E; font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 20px; letter-spacing: 2px;">【 本 命 四 柱 八 字 】</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; text-align: center;">
+                            <div style="width: 23%;">
+                                <div style="color: #64748B; font-size: 14px; margin-bottom: 8px;">年柱</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #1E293B;">${document.getElementById('bzYearGan').innerText}</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #475569;">${document.getElementById('bzYearZhi').innerText}</div>
+                            </div>
+                            <div style="width: 23%;">
+                                <div style="color: #64748B; font-size: 14px; margin-bottom: 8px;">月柱</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #1E293B;">${document.getElementById('bzMonthGan').innerText}</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #475569;">${document.getElementById('bzMonthZhi').innerText}</div>
+                            </div>
+                            <div style="background-color: #FEF3C7; padding: 15px 5px; border-radius: 8px; border: 2px solid #D97706; width: 28%; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                                <div style="color: #92400E; font-size: 14px; margin-bottom: 8px; font-weight: bold;">日柱 (元神)</div>
+                                <div style="font-size: 32px; font-weight: 900; color: #B45309;">${document.getElementById('bzDayGan').innerText}</div>
+                                <div style="font-size: 32px; font-weight: 900; color: #D97706;">${document.getElementById('bzDayZhi').innerText}</div>
+                            </div>
+                            <div style="width: 23%;">
+                                <div style="color: #64748B; font-size: 14px; margin-bottom: 8px;">時柱</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #1E293B;">${document.getElementById('bzTimeGan').innerText}</div>
+                                <div style="font-size: 28px; font-weight: bold; color: #475569;">${document.getElementById('bzTimeZhi').innerText}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 40px; box-sizing: border-box; width: 100%;">
+                        <div style="width: 31.5%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; background-color: #FFFFFF; box-sizing: border-box;">
+                            <h3 style="color: #92400E; font-size: 18px; margin-bottom: 10px; font-weight: bold;">紫微命宮</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #1E293B; margin-bottom: 10px;">${document.getElementById('resZiwei').innerText}</p>
+                            <p style="color: #475569; font-size: 13px; line-height: 1.5; text-align: justify;">${document.getElementById('resZiweiDesc').innerText}</p>
+                        </div>
+                        <div style="width: 31.5%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; background-color: #FFFFFF; box-sizing: border-box;">
+                            <h3 style="color: #92400E; font-size: 18px; margin-bottom: 10px; font-weight: bold;">西洋星象</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #1E293B; margin-bottom: 10px;">${document.getElementById('resZodiac').innerText}</p>
+                            <p style="color: #475569; font-size: 13px; line-height: 1.5; text-align: justify;">${document.getElementById('resZodiacDesc').innerText}</p>
+                        </div>
+                        <div style="width: 31.5%; border: 1px solid #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; background-color: #FFFFFF; box-sizing: border-box;">
+                            <h3 style="color: #92400E; font-size: 18px; margin-bottom: 10px; font-weight: bold;">生命靈數</h3>
+                            <p style="font-size: 20px; font-weight: bold; color: #1E293B; margin-bottom: 10px;">靈數 <span style="color:#D97706;">${document.getElementById('resNum').innerText}</span></p>
+                            <p style="color: #475569; font-size: 13px; line-height: 1.5; text-align: justify;">${document.getElementById('resNumDesc').innerText}</p>
+                        </div>
+                    </div>
+
+                    ${getPdfYearlyBlockHtml(window.yearlyDataList[0], window.globalBaseSeed)}
+                    ${getPdfYearlyBlockHtml(window.yearlyDataList[1], window.globalBaseSeed)}
+
+                    <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #CBD5E1; color: #94A3B8; font-size: 12px;">
+                        本報告由【玄機探秘】獨家星象演算法生成。命運掌握在自己手中，指引僅供參考。
+                    </div>
+                </div>
+            `;
+
+            const container = document.getElementById('hiddenPdfContainer');
+            container.innerHTML = pdfHtml;
+
+            // 嚴謹的 PDF 排版參數
+            const opt = {
+                margin:       [12, 12, 12, 12], 
+                filename:     `玄機探秘_${rName}_精準命理報告.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#FDFBF7' }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(container.firstElementChild).save().then(() => {
+                btn.disabled = false;
+                icon.textContent = "📄";
+                text.textContent = "下載精準命理報告 (PDF)";
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                container.innerHTML = ''; 
+            });
+        }
+    </script>
+</body>
+</html>
